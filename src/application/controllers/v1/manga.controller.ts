@@ -1,5 +1,5 @@
 require("dotenv").config()
-import { Controller, Get, Query, Route } from "tsoa";
+import { Controller, Example, Get, Query, Route } from "tsoa";
 import * as puppeteer from "puppeteer";
 import * as cheerio from "cheerio";
 import { ResponseHelper } from "../../../utils/response.helper";
@@ -7,6 +7,48 @@ import { ResponseHelper } from "../../../utils/response.helper";
 @Route('/v1/manga')
 export class MangaController extends Controller {
 
+  @Example<any>({
+    "data": {
+      "data": {
+        "name": {
+          "english": "Attack on Titan",
+          "japanese": "進撃の巨人"
+        },
+        "rating": "8.58",
+        "content": {
+          "volumes": "34",
+          "chapters": "141",
+          "status": "Finished"
+        }
+      },
+      "high": [
+        {
+          "link": "https://www.tokopedia.com/kemal-store2/ready-ya-kak-komik-attack-on-titan-set-1-28?refined=true&whid=0",
+          "price": "Rp3.465.000"
+        },
+        {
+          "link": "https://www.tokopedia.com/kittystore12/terbaik-komik-attack-on-titan-full-set-1-30?refined=true&whid=0",
+          "price": "Rp3.443.000"
+        },
+      ],
+      "low": [
+        {
+          "link": "https://www.tokopedia.com/promediacell/sewa-komik-attack-on-titan-25?refined=true&whid=0",
+          "price": "Rp5.000"
+        },
+        {
+          "link": "https://www.tokopedia.com/vvibupoistore/komik-segel-baru-bebas-milih-seraph-of-the-end-attack-on-titan-hanako?refined=true&whid=0",
+          "price": "Rp5.000"
+        },
+      ],
+      "cost": {
+        "highest": "Rp3.465.000",
+        "lowest": "Rp5.000"
+      },
+      "totalProducts": 2966
+    },
+    "success": true
+  })
   @Get('/tokopedia')
   public async scrapTokopedia(
     @Query('name') name: string,
