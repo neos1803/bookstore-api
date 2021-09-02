@@ -2,6 +2,7 @@ require("dotenv").config()
 import { Controller, Get, Query, Route } from "tsoa";
 import * as puppeteer from "puppeteer";
 import * as cheerio from "cheerio";
+import { ResponseHelper } from "../../../utils/response.helper";
 
 @Route('/v1/manga')
 export class MangaController extends Controller {
@@ -20,44 +21,63 @@ export class MangaController extends Controller {
         width: 1366,
         height: 768
       });
-
-      let links = {
-        high: [] as Array<String>,
-        low: [] as Array<String>
+      
+      let response = {
+        data: {
+          name: {
+            english: "",
+            japanese: ""
+          },
+          rating: "",
+          content: {
+            volumes: "",
+            chapters: "",
+            status: ""
+          }
+        },
+        high: [] as Array<{
+          link: string,
+          price: string
+        }>,
+        low: [] as Array<{
+          link: string,
+          price: string
+        }>,
+        cost: {
+          highest: "",
+          lowest: ""
+        },
+        totalProducts: 0
       };
 
-      let price = {
-        high: [] as Array<String>,
-        low: [] as Array<String>
-      }
-
-      console.log(`${process.env.BASE_URL_TOKOPEDIA}&nuq=${name.replace(/\s/g, '%20')}&ob=4&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`)
       await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36");
       await page.goto(`${process.env.BASE_URL_TOKOPEDIA}&nuq=${name.replace(/\s/g, '%20')}&ob=4&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
         waitUntil: 'domcontentloaded'
       });
-
-      // await page.evaluate('window.scrollTo(0,99999)');
 
       await page.waitForTimeout(1000);
 
       const contentHigh = await page.content();
       const $High = cheerio.load(contentHigh);
 
-      const totalProducts = $High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").length != 0 ? $High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").text().trim().split(" ")[7].replace(".", "") : 0;
+      response.totalProducts = $High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").length != 0 ? Number($High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").text().trim().split(" ")[7].replace(".", "")) : 0;
 
       const productHigh = $High(".css-12sieg3");
-      productHigh.each((_, e) => {
+      productHigh.each((i, e) => {
         const link = $High(e)
           .find(".css-1ehqh5q > a")
           .attr("href")
         
-        if (!(link?.includes("ta.tokopedia.com/promo"))) links.high.push(link as string)
-
-        if ($High(e).find(".css-1ehqh5q > .css-14x6rma").length == 0) {
-          price.high.push(
-            $High(e).find(".css-7fmtuv > a > .css-rhd610").text().trim()
-          );
+        if (!(link?.includes("ta.tokopedia.com/promo"))) {
+          if ($High(e).find(".css-1ehqh5q > .css-14x6rma").length == 0) {
+            const price = $High(e).find(".css-33bcxk > a > .css-rhd610").text().trim();
+            if (link && price !== "") {
+              response.high.push({
+                link: link as string,
+                price
+              })
+            }
+          }
         }
       });
 
@@ -74,27 +94,78 @@ export class MangaController extends Controller {
           .find(".css-1ehqh5q > a")
           .attr("href")
         
-        if (!(link?.includes("ta.tokopedia.com/promo"))) links.low.push(link as string)
-
-        if ($Low(e).find(".css-1ehqh5q > .css-14x6rma").length == 0) {
-          price.low.push(
-            $Low(e).find(".css-7fmtuv > a > .css-rhd610").text().trim()
-          );
+        if (!(link?.includes("ta.tokopedia.com/promo"))) {
+          if ($Low(e).find(".css-1ehqh5q > .css-14x6rma").length == 0) {
+            const price = $Low(e).find(".css-33bcxk > a > .css-rhd610").text().trim();
+            if (link && price !== "") {
+              response.low.push({
+                link: link as string,
+                price: $Low(e).find(".css-33bcxk > a > .css-rhd610").text().trim()
+              })
+            }
+          }
         }
       });
+
+      response.cost.highest = response.high[0].price;
+      response.cost.lowest = response.low[0].price;
 
       await page.goto(`https://myanimelist.net/manga.php?q=${name.replace(/\s/g, "%20")}&cat=manga`, {
         waitUntil: 'domcontentloaded'
       });
 
-      // const contentMAL = await page.content();
-      // const $MAL = cheerio.load(contentMAL);
+      const mal_content = await page.content();
+      const $MAL = cheerio.load(mal_content);
 
+      const content = await $MAL("div[class='js-categories-seasonal js-block-list list'] > table > tbody");
+      const manga_link: string = $MAL(content[0]).find("tr > td[class='borderClass bgColor0'] > a").attr("href") as string;
 
+      await page.goto(manga_link, {
+        waitUntil: 'domcontentloaded'
+      });
 
-      return "Oke"
+      const manga_content = await page.content();
+      const $MANGA = cheerio.load(manga_content);
+      
+      const side_bar = $MANGA("div[id='content'] > table > tbody > tr > td[class='borderClass']");
+      $MANGA(side_bar)
+        .find(".spaceit_pad")
+        .each((_, e) => {
+          const text = $MANGA(e).text()
+          if (text.includes("English")) {
+            response.data.name.english = text.replace("English: ", "")
+          }
+          if (text.includes("Japanese:")) {
+            response.data.name.japanese = text.replace("Japanese: ", "")
+          }
+        });
+
+      $MANGA(side_bar)
+        .find("div")
+        .each((_, e) => {
+          const text = $MANGA(e).text()
+          if (text.includes("Chapters")) response.data.content.chapters = text.replace("Chapters: ", "").replace("\n", "")
+        })
+
+      $MANGA(side_bar)
+        .find(".spaceit")
+        .each((_, e) => {
+          const text = $MANGA(e).text()
+          if (text.includes("Volumes")) response.data.content.volumes = text.replace("Volumes: ", "").replace("\n", "")
+          if (text.includes("Status")) response.data.content.status = text.replace("Status: ", "")
+        });
+      
+      response.data.rating = $MANGA(side_bar)
+        .find("div[class='po-r js-statistics-info di-i'] > span > span[itemprop='ratingValue']")
+        .text();
+
+      await page.close();
+      
+      this.setStatus(200);
+
+      return new ResponseHelper<any>(response, true);
     } catch (error) {
-      console.log(error)
+      return new ResponseHelper<any>(error, false);
     }
   }
 
