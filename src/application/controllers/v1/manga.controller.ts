@@ -101,7 +101,10 @@ export class MangaController extends Controller {
         waitUntil: 'domcontentloaded'
       });
 
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(10000);
+
+      console.log(base_url.tokopedia)
+      console.log(page);
 
       const contentHigh = await page.content();
       const $High = cheerio.load(contentHigh);
