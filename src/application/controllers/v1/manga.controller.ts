@@ -58,8 +58,12 @@ export class MangaController extends Controller {
     @Query('name') name: string,
   ): Promise<any> {
     try {
+      console.log("Scraping Tokopedia")
       const browser =  await puppeteer.launch({
         headless: true,
+      });
+      console.log({
+        1: browser
       });
   
       const page = await browser.newPage();
@@ -67,6 +71,9 @@ export class MangaController extends Controller {
         width: 1366,
         height: 768
       });
+      console.log({
+        2: page
+      })
       
       let response = {
         data: {
@@ -96,10 +103,16 @@ export class MangaController extends Controller {
         totalProducts: 0
       };
 
-      await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36");
+      await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36")
+        .catch((e) => {
+          return new ResponseHelper<any>(e, false);
+        })
       await page.goto(`${base_url.tokopedia}&nuq=${name.replace(/\s/g, '%20')}&ob=4&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
         waitUntil: 'domcontentloaded'
-      });
+      })
+        .catch((e) => {
+          return new ResponseHelper<any>(e, false);
+        })
 
       await page.waitForTimeout(10000);
 
