@@ -110,9 +110,7 @@ export class MangaController extends Controller {
 
       const contentHigh = await page.content();
       const $High = cheerio.load(contentHigh);
-
-      console.log(3)
-      console.log(contentHigh)
+      
       response.totalProducts = $High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").length != 0 ? Number($High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").text().trim().split(" ")[7].replace(".", "")) : 0;
 
       const productHigh = $High(".css-12sieg3");
