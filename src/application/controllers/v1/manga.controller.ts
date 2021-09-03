@@ -61,6 +61,10 @@ export class MangaController extends Controller {
       console.log("Scraping Tokopedia")
       const browser =  await puppeteer.launch({
         headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox'
+        ]
       });
       console.log({
         1: browser
