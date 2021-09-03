@@ -66,18 +66,12 @@ export class MangaController extends Controller {
           '--disable-setuid-sandbox'
         ]
       });
-      console.log({
-        1: browser
-      });
   
       const page = await browser.newPage();
       page.setViewport({
         width: 1366,
         height: 768
       });
-      console.log({
-        2: page
-      })
       
       let response = {
         data: {
@@ -107,25 +101,18 @@ export class MangaController extends Controller {
         totalProducts: 0
       };
 
-      await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36")
-        .catch((e) => {
-          return new ResponseHelper<any>(e, false);
-        })
+      await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36");
       await page.goto(`${base_url.tokopedia}&nuq=${name.replace(/\s/g, '%20')}&ob=4&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
         waitUntil: 'domcontentloaded'
-      })
-        .catch((e) => {
-          return new ResponseHelper<any>(e, false);
-        })
+      });
 
       await page.waitForTimeout(10000);
-
-      console.log(base_url.tokopedia)
-      console.log(page);
 
       const contentHigh = await page.content();
       const $High = cheerio.load(contentHigh);
 
+      console.log(3)
+      console.log(contentHigh)
       response.totalProducts = $High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").length != 0 ? Number($High(".css-rjanld > .css-w01oz8 > .css-8j9pkz").text().trim().split(" ")[7].replace(".", "")) : 0;
 
       const productHigh = $High(".css-12sieg3");
