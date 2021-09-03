@@ -4,6 +4,10 @@ import * as puppeteer from "puppeteer";
 import * as cheerio from "cheerio";
 import { ResponseHelper } from "../../../utils/response.helper";
 
+const base_url = {
+  tokopedia: "https://www.tokopedia.com/search?navsource=home"
+}
+
 @Route('/v1/manga')
 export class MangaController extends Controller {
 
@@ -93,7 +97,7 @@ export class MangaController extends Controller {
       };
 
       await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36");
-      await page.goto(`${process.env.BASE_URL_TOKOPEDIA}&nuq=${name.replace(/\s/g, '%20')}&ob=4&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
+      await page.goto(`${base_url.tokopedia}&nuq=${name.replace(/\s/g, '%20')}&ob=4&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
         waitUntil: 'domcontentloaded'
       });
 
@@ -123,7 +127,7 @@ export class MangaController extends Controller {
         }
       });
 
-      await page.goto(`${process.env.BASE_URL_TOKOPEDIA}&nuq=${name.replace(/\s/g, '%20')}&ob=3&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
+      await page.goto(`${base_url.tokopedia}&nuq=${name.replace(/\s/g, '%20')}&ob=3&rf=true&sc=3309&source=universe&st=product&q=${name.replace(/\s/g, '%20')}`, {
         waitUntil: 'domcontentloaded'
       });
 
